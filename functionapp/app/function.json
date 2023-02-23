@@ -1,0 +1,26 @@
+{
+  "bindings": [
+    {
+      "name": "req",
+      "authLevel": "anonymous",
+      "methods": [
+        "post",
+        "get"
+      ],
+      "direction": "in",
+      "type": "httpTrigger"
+    },
+    {
+      "name": "$return",
+      "type": "http",
+      "direction": "out"
+    },
+    {
+      "name": "outputTable",
+      "tableName": "outtable",
+      "connection": "AzureAppTableStorage",
+      "direction": "out",
+      "type": "table"
+    }
+  ]
+}
