@@ -22,7 +22,7 @@ namespace functionapp
     {
         [FunctionName("app")]
         public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
-        [Table("outtable", Connection = "AzureAppTableStorage")] ICollector<OutTable> outputTable, ILogger log)
+        [Table("outtable", Connection = "AzureAppStorage")] ICollector<OutTable> outputTable, ILogger log)
         {
             log.LogInformation("C# HTTP trigger function processed a request.");
 
