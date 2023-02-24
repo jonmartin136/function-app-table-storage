@@ -10,7 +10,7 @@ begin {
     $storageAccount01 = @{ 'name' = ('{0}{1}{2}{3}{4}'     -F 'st',   $App, $Location, $EnvId, '01'); 'location' = $locationMap[$Location].name; 'sku' = 'Standard_ZRS';  'accessTier' = 'Hot'; 'kind' = 'StorageV2' }
     $storageAccount02 = @{ 'name' = ('{0}{1}{2}{3}{4}'     -F 'st',   $App, $Location, $EnvId, '02'); 'location' = $locationMap[$Location].name; 'sku' = 'Standard_GZRS'; 'accessTier' = 'Hot'; 'kind' = 'StorageV2' }
     $plan01           = @{ 'name' = ('{0}-{1}-{2}-{3}-{4}' -F 'asp',  $App, $Location, $EnvId, '01'); 'location' = $locationMap[$Location].name; 'sku' = 'Y1'; 'ZoneRedundant' = 'false' }
-    $functionApp01    = @{ 'name' = ('{0}-{1}-{2}-{3}-{4}' -F 'func', $App, $Location, $EnvId, '01'); 'location' = $locationMap[$Location].name; 'gitSourceBranch' = 'topic/0001-initial-dev'; 'gitSourceUrl' = 'https://github.com/jonmartin136/function-app-table-storage'; 'osType' = 'Windows'; 'runtime' = 'dotnet'; 'runtimeVersion' = '6' }
+    $functionApp01    = @{ 'name' = ('{0}-{1}-{2}-{3}-{4}' -F 'func', $App, $Location, $EnvId, '01'); 'location' = $locationMap[$Location].name; 'gitSourceBranch' = 'main'; 'gitSourceUrl' = 'https://github.com/jonmartin136/function-app-table-storage'; 'osType' = 'Windows'; 'runtime' = 'dotnet'; 'runtimeVersion' = '6' }
 
     $result = $null
 
