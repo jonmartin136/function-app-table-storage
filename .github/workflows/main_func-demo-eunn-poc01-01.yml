@@ -6,7 +6,7 @@ name: Build and deploy dotnet core app to Azure Function App - fas-eunn-poc-demo
 on:
   push:
     branches:
-      - topic/0001-initial-dev
+      - main
   workflow_dispatch:
 
 env:

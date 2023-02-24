@@ -2,6 +2,7 @@
 [CmdletBinding()]
 param ([string] $Subscription = (az account show | ConvertFrom-Json -AsHashTable).id, [string] $ResourceGroup = 'demo', [string] $Location = 'eunn', [string] $EnvId = 'poc01', [string] $App = 'demo', [string] $AccessKeyMode = 'primary', [switch] $PressAnyKey)
 begin {
+
     $locationMap = @{ 'eunn' = @{ 'name' = 'northeurope'; 'displayName' = 'North Europe' }; 'euww' = @{ 'name' = 'westeurope'; 'displayName' = 'West Europe' } }
 
     $logAnalytics01   = @{ 'name' = ('{0}-{1}-{2}-{3}-{4}' -F 'log',  $App, $Location, $EnvId, '01'); 'location' = $locationMap[$Location].name; 'sku' = 'PerGB2018'; 'quota' = '0.5' }
@@ -29,6 +30,11 @@ begin {
     function Test-Resource ([string] $Subscription, [string] $ResourceGroup, [string] $Name, [ref] $OutVariable) {
         return ($null -ne ($OutVariable.Value = (az resource list --subscription $Subscription --resource-group $ResourceGroup | ConvertFrom-Json -AsHashTable) | Where-Object { $_.name -eq $Name }))
     }
+
+    function Test-StorageAccountTable ([string] $Subscription, [string] $ResourceGroup, [string] $AccountName, [string] $AccountKey, [string] $Name, [ref] $OutVariable) {
+        return ($null -ne ($OutVariable.Value = (az storage table list --subscription $Subscription --account-name $AccountName --account-key $AccountKey | ConvertFrom-Json -AsHashTable) | Where-Object { $_.name -eq $Name }))
+    }
+
 }
 process {
 
@@ -70,6 +76,12 @@ process {
     $storageAccount02.Add('connectionString', @{ 'primary' = (az storage account show-connection-string --subscription $Subscription --resource-group $ResourceGroup.name --name $storageAccount02.name --key 'primary' --query 'connectionString' --output tsv); 'secondary' = (az storage account show-connection-string --subscription $Subscription --resource-group $ResourceGroup.name --name $storageAccount02.name --key 'secondary' --query 'connectionString' --output tsv) })
     Invoke-PressAnyKey -Object $storageAccount02 -PressAnyKey:$PressAnyKey
 
+    if (-not (Test-StorageAccountTable -Subscription $Subscription -ResourceGroup $ResourceGroup.name -AccountName $storageAccount02.name -AccountKey ($storageAccount02AccountKey = $storageAccount02.connectionString."$AccessKeyMode" -replace (';BlobEndpoint=.+$', '') -replace ('^.+;AccountKey=', '')) -Name ($storageAccount02TableName = 'outtable') -OutVariable ([ref]$result))) {
+        Write-Information -Message ('Creating "{2}/{3}" {4} [subscription: {0}, resource group: {1}] ...' -F $Subscription, $ResourceGroup.name, $storageAccount02.name, $storageAccount02TableName, 'storage account table')
+        $result = az storage table create --subscription $Subscription --account-name $storageAccount02.name --name $storageAccount02TableName --account-key $storageAccount02AccountKey --auth-mode 'key'  | ConvertFrom-Json -AsHashTable
+    }
+    Invoke-PressAnyKey -Object $result -PressAnyKey:$PressAnyKey
+
     if ($plan01.sku -ne 'Y1') {
         if (-not (Test-Resource -Subscription $Subscription -ResourceGroup $ResourceGroup.name -Name $plan01.name -OutVariable ([ref]$result))) {
             Write-Information -Message ('Creating "{2}" {3} [subscription: {0}, resource group: {1}] ...' -F $Subscription, $ResourceGroup.name, $plan01.name, 'app service plan resource')
@@ -93,14 +105,6 @@ process {
     Invoke-PressAnyKey -Object $functionApp01 -PressAnyKey:$PressAnyKey
 
     Write-Information -Message ('Configuring "{2}" {3} [subscription: {0}, resource group: {1}] ...' -F $Subscription, $ResourceGroup.name, $functionApp01.name, 'function app resource')
-    az functionapp config appsettings set --subscription $Subscription --resource-group $ResourceGroup.name --name $functionApp01.name --settings ('AzureAppStorage={0}' -F ($storageAccount02.connectionString."$AccessKeyMode" -replace (';BlobEndpoint=.+$', '')))
-
-#az functionapp deployment source config
-#--subscription $Subscription --resource-group $ResourceGroup.name --name $functionApp01.name
-#--repo-url $functionApp01.GitSourceUrl
-#--branch $functionApp01.GitSourceBranch
-#--git-token
-#--github-action
-#--repository-type 'github'
+    $result = az functionapp config appsettings set --subscription $Subscription --resource-group $ResourceGroup.name --name $functionApp01.name --settings ('AzureAppStorage={0}' -F ($storageAccount02.connectionString."$AccessKeyMode" -replace (';BlobEndpoint=.+$', '')))
 
 }
